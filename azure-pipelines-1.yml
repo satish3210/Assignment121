@@ -13,19 +13,25 @@ stages:
     continueOnError: true
     steps:
     - task: PowerShell@2
-      displayName: Run TFLint Scan
+      displayName: Run TFLint
       inputs:
         targetType: 'inline'
         script: |
-          # Initialize TFLint plugins
+          $workDir = "$(System.DefaultWorkingDirectory)\environment\dev"
+          $outFile = "$workDir\tflint.json"
+
+          Write-Host "Working dir: $workDir"
+          Write-Host "Output file: $outFile"
+
+          # Init plugins
           tflint --init
 
-          # Run TFLint and generate JSON report
-          tflint --chdir="$(System.DefaultWorkingDirectory)\environment\dev" --recursive --format json > tflint.json
+          # Run tflint and write output EXACTLY where we publish from
+          tflint --chdir="$workDir" --recursive --format json > "$outFile"
 
-          # Do not fail pipeline if issues are found
+          # Do not fail pipeline on lint issues
           if ($LASTEXITCODE -ne 0) {
-            Write-Host "TFLint issues found. Pipeline will continue."
+            Write-Host "TFLint issues found (expected). Continuing pipeline."
             exit 0
           }
 
