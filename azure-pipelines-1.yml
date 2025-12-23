@@ -5,6 +5,7 @@ pool:
   name: agent1
 
 stages:
+# ================= TFLINT SCAN =================
 - stage: tflint_scan
   displayName: "TFLint Scan"
   jobs:
@@ -18,22 +19,9 @@ stages:
         targetType: 'inline'
         script: |
           $workDir = "$(System.DefaultWorkingDirectory)\environment\dev"
-          $outFile = "$workDir\tflint.json"
-
-          Write-Host "Working dir: $workDir"
-          Write-Host "Output file: $outFile"
-
-          # Init plugins
           tflint --init
-
-          # Run tflint and write output EXACTLY where we publish from
-          tflint --chdir="$workDir" --recursive --format json > "$outFile"
-
-          # Do not fail pipeline on lint issues
-          if ($LASTEXITCODE -ne 0) {
-            Write-Host "TFLint issues found (expected). Continuing pipeline."
-            exit 0
-          }
+          tflint --chdir="$workDir" --recursive --format json > "$workDir\tflint.json"
+          if ($LASTEXITCODE -ne 0) { exit 0 }
 
     - task: PublishPipelineArtifact@1
       displayName: Publish TFLint Report
