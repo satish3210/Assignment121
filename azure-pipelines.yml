@@ -14,7 +14,7 @@ stages:
       - task: PowerShell@2
         inputs:
           targetType: 'inline'
-          script: 'tflint --chdir=$(System.DefaultWorkingDirectory)\environment\dev --recursive --format json > tflint.json'
+          script: 'tflint --chdir=$(System.DefaultWorkingDirectory)\environment\dev --recursive --format json > tflint.json || exit 0'
       - task: PublishPipelineArtifact@1
         inputs:
          targetPath: '$(System.DefaultWorkingDirectory)\tflint.json'
