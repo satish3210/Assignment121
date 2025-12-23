@@ -1,0 +1,37 @@
+trigger:
+- none
+
+pool:
+  name: agent1
+
+stages:
+- stage: tflint_scan
+  displayName: "TFLint Scan"
+  jobs:
+  - job: run_tflint
+    displayName: "Run TFLint"
+    continueOnError: true
+    steps:
+    - task: PowerShell@2
+      displayName: Run TFLint Scan
+      inputs:
+        targetType: 'inline'
+        script: |
+          # Initialize TFLint plugins
+          tflint --init
+
+          # Run TFLint and generate JSON report
+          tflint --chdir="$(System.DefaultWorkingDirectory)\environment\dev" --recursive --format json > tflint.json
+
+          # Do not fail pipeline if issues are found
+          if ($LASTEXITCODE -ne 0) {
+            Write-Host "TFLint issues found. Pipeline will continue."
+            exit 0
+          }
+
+    - task: PublishPipelineArtifact@1
+      displayName: Publish TFLint Report
+      inputs:
+        targetPath: '$(System.DefaultWorkingDirectory)\environment\dev\tflint.json'
+        artifact: 'tflint-result'
+        publishLocation: 'pipeline'
