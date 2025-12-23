@@ -5,21 +5,29 @@ pool:
  name: agent1
 
 stages:
-- stage: scan
-  displayName: "tflint scan"
+- stage: tflint_scan
+  displayName: "TFLint Scan"
   jobs:
-  - job: tflint_scan
+  - job: run_tflint
+    displayName: "Run TFLint"
     continueOnError: true
     steps:
-      - task: PowerShell@2
-        inputs:
-          targetType: 'inline'
-          script: 'tflint --chdir=$(System.DefaultWorkingDirectory)\environment\dev --recursive --format json > tflint.json || exit 0'
-      - task: PublishPipelineArtifact@1
-        inputs:
-         targetPath: '$(System.DefaultWorkingDirectory)\tflint.json'
-         artifact: 'tflintresult'
-         publishLocation: 'pipeline'
+    - task: PowerShell@2
+      displayName: Run TFLint
+      inputs:
+        targetType: 'inline'
+        script: |
+          $workDir = "$(System.DefaultWorkingDirectory)\environment\dev"
+          tflint --init
+          tflint --chdir="$workDir" --recursive --format json > "$workDir\tflint.json"
+          if ($LASTEXITCODE -ne 0) { exit 0 }
+
+    - task: PublishPipelineArtifact@1
+      displayName: Publish TFLint Report
+      inputs:
+        targetPath: '$(System.DefaultWorkingDirectory)\environment\dev\tflint.json'
+        artifact: 'tflint-result'
+        publishLocation: 'pipeline'
 - stage: Terraform_init
   displayName: "Terrafrom init"
   jobs:
